@@ -316,6 +316,14 @@ func newAWSConfig(url, region string, forcePathStyle bool) (*aws.Config, error) 
 }
 
 func (o *ObjectStore) PutObject(bucket, key string, body io.Reader) error {
+	log := o.log.WithFields(
+		logrus.Fields{
+			"bucket": bucket,
+			"key":    key,
+		},
+	)
+	log.Debug("Putting object")
+
 	req := &s3manager.UploadInput{
 		Bucket: &bucket,
 		Key:    &key,
@@ -338,6 +346,11 @@ func (o *ObjectStore) PutObject(bucket, key string, body io.Reader) error {
 	}
 
 	_, err := o.s3Uploader.Upload(req)
+
+	if err != nil {
+		log.Errorf("error putting object %f", err)
+		log.Errorf("aidan: error wrapped: %v", errors.Wrapf(err, "error putting object %s", key))
+	}
 
 	return errors.Wrapf(err, "error putting object %s", key)
 }
